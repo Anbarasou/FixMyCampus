@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – FixMyCampus</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex items-center justify-center font-sans p-4">
+
+    <!-- Success/Error Message Banner -->
+    <div id="messageBanner" class="fixed top-4 left-1/2 transform -translate-x-1/2 hidden z-50"></div>
+
+    <!-- Login Container -->
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-2">
+            
+            <!-- Left Side: Branding -->
+            <div class="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8 md:p-12 flex flex-col justify-center">
+                <h1 class="text-4xl font-bold mb-4">📢 FixMyCampus</h1>
+                <p class="text-xl mb-6">Anonymous Smart Issue Reporting</p>
+                <div class="space-y-3 text-blue-100">
+                    <p>✅ Quick & Anonymous Issue Reporting</p>
+                    <p>✅ Real-time Status Tracking</p>
+                    <p>✅ Priority-based Resolution</p>
+                    <p>✅ Staff Dashboard for Quick Action</p>
+                </div>
+            </div>
+
+            <!-- Right Side: Login Forms -->
+            <div class="p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome Back!</h2>
+                
+                <!-- Tab Buttons -->
+                <div class="flex gap-2 mb-6">
+                    <button id="studentTab" 
+                        class="flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-md">
+                        👨‍🎓 Student Login
+                    </button>
+                    <button id="staffTab" 
+                        class="flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        👥 Staff Login
+                    </button>
+                </div>
+
+                <!-- Student Login Form -->
+                <div id="studentForm" class="space-y-4">
+                    <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                        <p class="text-sm text-gray-700">
+                            <strong>Anonymous Access:</strong> As a student, you can report issues anonymously. 
+                            No login credentials required!
+                        </p>
+                    </div>
+                    <button onclick="studentLogin()" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all">
+                        Continue as Student →
+                    </button>
+                </div>
+
+                <!-- Staff Login Form -->
+                <div id="staffForm" class="hidden space-y-4">
+                    <form id="staffLoginForm" class="space-y-4">
+                        <div>
+                            <label for="staffName" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Full Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="staffName" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Enter your full name">
+                        </div>
+
+                        <div>
+                            <label for="staffRole" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Role <span class="text-red-500">*</span>
+                            </label>
+                            <select id="staffRole" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                                <option value="">Select your role</option>
+                                <option value="Administrator">Administrator</option>
+                                <option value="Faculty">Faculty</option>
+                                <option value="Maintenance Staff">Maintenance Staff</option>
+                                <option value="IT Support">IT Support</option>
+                                <option value="Security">Security</option>
+                                <option value="Hostel Warden">Hostel Warden</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="staffDept" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Department <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="staffDept" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="e.g., Computer Science, Facilities">
+                        </div>
+
+                        <div>
+                            <label for="staffPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Password <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" id="staffPassword" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Enter password">
+                            <p class="text-xs text-gray-500 mt-1">Default password: 1234</p>
+                        </div>
+
+                        <button type="submit" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all">
+                            Login as Staff →
+                        </button>
+                    </form>
+                </div>
+
+                <p class="text-xs text-gray-500 text-center mt-6">
+                    By continuing, you agree to follow campus policies and guidelines.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== TAB SWITCHING ====================
+        const studentTab = document.getElementById('studentTab');
+        const staffTab = document.getElementById('staffTab');
+        const studentForm = document.getElementById('studentForm');
+        const staffForm = document.getElementById('staffForm');
+
+        studentTab.addEventListener('click', () => {
+            studentTab.className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-md';
+            staffTab.className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300';
+            studentForm.classList.remove('hidden');
+            staffForm.classList.add('hidden');
+        });
+
+        staffTab.addEventListener('click', () => {
+            staffTab.className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-purple-600 text-white shadow-md';
+            studentTab.className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300';
+            staffForm.classList.remove('hidden');
+            studentForm.classList.add('hidden');
+        });
+
+        // ==================== STUDENT LOGIN ====================
+        function studentLogin() {
+            // Store user type in sessionStorage
+            sessionStorage.setItem('userType', 'student');
+            sessionStorage.removeItem('staffInfo');
+            
+            // Redirect to student dashboard
+            window.location.href = 'index2.html';
+        }
+
+        // ==================== STAFF LOGIN ====================
+        document.getElementById('staffLoginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('staffName').value.trim();
+            const role = document.getElementById('staffRole').value;
+            const dept = document.getElementById('staffDept').value.trim();
+            const password = document.getElementById('staffPassword').value;
+
+            // Validate password
+            if (password !== '1234') {
+                showErrorMessage('❌ Invalid password. Default password is 1234');
+                return;
+            }
+
+            // Store staff info in sessionStorage
+            const staffInfo = {
+                name: name,
+                role: role,
+                department: dept,
+                loginTime: new Date().toISOString()
+            };
+
+            sessionStorage.setItem('userType', 'staff');
+            sessionStorage.setItem('staffInfo', JSON.stringify(staffInfo));
+
+            showSuccessMessage('✅ Login successful! Redirecting...');
+
+            // Redirect to admin dashboard after short delay
+            setTimeout(() => {
+                window.location.href = 'admin2.html';
+            }, 1000);
+        });
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showSuccessMessage(message) {
+            const banner = document.getElementById('messageBanner');
+            banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold z-50';
+            banner.textContent = message;
+            setTimeout(() => banner.classList.add('hidden'), 3000);
+        }
+
+        function showErrorMessage(message) {
+            const banner = document.getElementById('messageBanner');
+            banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold z-50';
+            banner.textContent = message;
+            setTimeout(() => banner.classList.add('hidden'), 4000);
+        }
+
+        // ==================== CHECK EXISTING SESSION ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            const userType = sessionStorage.getItem('userType');
+            
+            if (userType === 'student') {
+                // Auto-redirect if already logged in as student
+                window.location.href = 'index2.html';
+            } else if (userType === 'staff') {
+                // Auto-redirect if already logged in as staff
+                window.location.href = 'admin2.html';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

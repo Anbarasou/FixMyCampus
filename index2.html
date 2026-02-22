@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixMyCampus – Anonymous Smart Issue Reporting</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Custom animations and styles */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .char-count-warning {
+            color: #EF4444;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 2s ease-in-out infinite;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 sm:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-3xl sm:text-4xl font-bold">📢 FixMyCampus</h1>
+                    <span class="px-3 py-1 bg-blue-500 rounded-full text-xs font-bold">Student View</span>
+                </div>
+                <p class="text-sm sm:text-base text-blue-100">Anonymous Smart Issue Reporting</p>
+                <div class="flex gap-3">
+                    <button id="seedDemoBtn" type="button"
+                        class="bg-white text-blue-600 px-4 py-2 rounded-lg shadow-md hover:shadow-lg font-semibold text-sm min-h-[44px]"
+                        aria-label="Add 5 demo issues to the database">
+                        🎲 Add Demo Data
+                    </button>
+                    <button id="logoutBtn" type="button"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg font-semibold text-sm">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Success/Error Message Banner -->
+    <div id="messageBanner" class="hidden" role="alert" aria-live="polite"></div>
+
+    <!-- ==================== DASHBOARD STATS ==================== -->
+    <section class="container mx-auto px-4 sm:px-8 py-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Total Issues -->
+            <div
+                class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6 hover:scale-105 transition-transform cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-blue-100">Total Issues</p>
+                        <h3 id="totalCount" class="text-5xl font-bold mt-2">0</h3>
+                    </div>
+                    <div class="text-5xl opacity-50">🎯</div>
+                </div>
+            </div>
+
+            <!-- Pending -->
+            <div
+                class="bg-gradient-to-br from-gray-500 to-gray-600 text-white rounded-xl shadow-lg p-6 hover:scale-105 transition-transform cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-100">Pending</p>
+                        <h3 id="pendingCount" class="text-5xl font-bold mt-2">0</h3>
+                    </div>
+                    <div class="text-5xl opacity-50">⏳</div>
+                </div>
+            </div>
+
+            <!-- In Progress -->
+            <div
+                class="bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-6 hover:scale-105 transition-transform cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-blue-100">In Progress</p>
+                        <h3 id="progressCount" class="text-5xl font-bold mt-2">0</h3>
+                    </div>
+                    <div class="text-5xl opacity-50">🔄</div>
+                </div>
+            </div>
+
+            <!-- Resolved -->
+            <div
+                class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 hover:scale-105 transition-transform cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-green-100">Resolved</p>
+                        <h3 id="resolvedCount" class="text-5xl font-bold mt-2">0</h3>
+                    </div>
+                    <div class="text-5xl opacity-50">✅</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="container mx-auto px-4 sm:px-8 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- ==================== SUBMISSION FORM ==================== -->
+            <aside class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Raise Complaint</h2>
+
+                    <form id="complaintForm" class="space-y-4">
+                        <!-- Issue Title -->
+                        <div>
+                            <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Issue Title <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="title"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Brief title of the issue" required minlength="5" maxlength="100"
+                                aria-describedby="titleError" aria-invalid="false">
+                            <p id="titleError" class="text-red-500 text-xs mt-1 hidden" role="alert">Title must be 5-100
+                                characters
+                            </p>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Description <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="description" rows="5"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                                placeholder="Describe the issue in detail (max 500 characters)" required minlength="10"
+                                maxlength="500" aria-describedby="descError charCount" aria-invalid="false"></textarea>
+                            <p id="charCount" class="text-xs text-gray-500 mt-1">0 / 500 characters</p>
+                            <p id="descError" class="text-red-500 text-xs mt-1 hidden" role="alert">Description must be
+                                10-500
+                                characters</p>
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Category <span class="text-red-500">*</span>
+                            </label>
+                            <select id="category"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                required>
+                                <option value="Infrastructure">🏗️ Infrastructure</option>
+                                <option value="Academics">📚 Academics</option>
+                                <option value="Hostel">🏠 Hostel</option>
+                                <option value="Facilities">🔧 Facilities</option>
+                                <option value="Safety">🚨 Safety</option>
+                                <option value="HR">👥 HR</option>
+                                <option value="Other">📋 Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Priority -->
+                        <div>
+                            <label for="priority" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Priority <span class="text-red-500">*</span>
+                            </label>
+                            <select id="priority"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                required>
+                                <option value="Low">🟢 Low – Can wait</option>
+                                <option value="Medium" selected>🟡 Medium – Important</option>
+                                <option value="High">🔴 High – Urgent</option>
+                            </select>
+                            
+                            <!-- AI Analysis Button -->
+                            <button type="button" id="aiAnalyzeBtn"
+                                class="mt-2 w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                                <span>🤖 AI Priority Analysis</span>
+                            </button>
+                            
+                            <!-- AI Analysis Result -->
+                            <div id="aiAnalysisResult" class="hidden mt-3 p-4 rounded-lg border-2 animate-pulse-slow">
+                                <div class="flex items-start gap-3">
+                                    <div class="text-2xl">🤖</div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-800 mb-1">AI Analysis:</p>
+                                        <p id="aiAnalysisText" class="text-sm text-gray-700 mb-2"></p>
+                                        <p class="text-xs text-gray-500" id="aiReasoningText"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Anonymous Checkbox -->
+                        <div class="flex items-start">
+                            <input type="checkbox" id="isAnonymous"
+                                class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                checked>
+                            <label for="isAnonymous" class="ml-3">
+                                <span class="text-sm font-semibold text-gray-700">🕵️ Submit Anonymously</span>
+                                <p class="text-xs text-gray-500">Your identity will not be recorded</p>
+                            </label>
+                        </div>
+
+                        <!-- Name Field (conditional) -->
+                        <div id="nameField" class="hidden">
+                            <label for="submitterName" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Your Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="submitterName"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                placeholder="Enter your name (optional)" minlength="2" maxlength="50"
+                                aria-required="false" aria-describedby="nameError" aria-invalid="false">
+                            <p id="nameError" class="text-red-500 text-xs mt-1 hidden" role="alert">Name must be 2-50
+                                characters</p>
+                        </div>
+
+                        <!-- Photo Upload (Optional) -->
+                        <div>
+                            <label for="photoUpload" class="block text-sm font-semibold text-gray-700 mb-2">
+                                📷 Upload Photo <span class="text-gray-500 text-xs">(Optional)</span>
+                            </label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-blue-400 transition-colors">
+                                <input type="file" id="photoUpload" accept="image/*" 
+                                    class="hidden"
+                                    aria-describedby="photoHelp">
+                                <label for="photoUpload" 
+                                    class="flex flex-col items-center justify-center cursor-pointer">
+                                    <div id="photoPreviewContainer" class="hidden w-full mb-3">
+                                        <img id="photoPreview" src="" alt="Preview" 
+                                            class="w-full h-48 object-cover rounded-lg border-2 border-gray-200">
+                                        <button type="button" id="removePhoto"
+                                            class="mt-2 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-semibold">
+                                            🗑️ Remove Photo
+                                        </button>
+                                    </div>
+                                    <div id="photoUploadPrompt" class="text-center">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" 
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-600">
+                                            <span class="font-semibold text-blue-600 hover:text-blue-700">Click to upload</span>
+                                            or drag and drop
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <p id="photoHelp" class="text-xs text-gray-500 mt-2">
+                                📸 Add a photo to help staff understand the issue better
+                            </p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitBtn"
+                            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg shadow-md hover:shadow-lg font-semibold text-lg hover:from-blue-600 hover:to-blue-700">
+                            Submit Issue
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- ==================== ISSUES LIST ==================== -->
+            <section class="lg:col-span-2">
+
+                <!-- Info Banner for Students -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="text-2xl">ℹ️</div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">Student View - Read Only</h3>
+                            <p class="text-sm text-blue-800">
+                                You can submit new issues and track their status. 
+                                <span class="font-semibold">Only staff members can update issue status</span> to ensure proper workflow management.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="bg-white rounded-xl shadow-lg p-4 mb-6 sticky top-0 z-10">
+                    <div class="flex flex-wrap gap-2 items-center justify-between">
+                        <div class="flex flex-wrap gap-2" id="filterButtons">
+                            <!-- Dynamically populated -->
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <label for="sortSelect"
+                                class="text-sm font-semibold text-gray-700 hidden sm:block">Sort:</label>
+                            <select id="sortSelect"
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="highPriority">High Priority First</option>
+                                <option value="lowPriority">Low Priority First</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issues Container -->
+                <div id="issuesList" class="space-y-5">
+                    <!-- Dynamically populated -->
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="container mx-auto px-4 sm:px-8 py-6 text-center text-gray-500 text-sm">
+        <p>FixMyCampus – Anonymous Smart Issue Reporting</p>
+    </footer>
+
+    <!-- ==================== FIREBASE & JAVASCRIPT ==================== -->
+    <script type="module">
+        /*
+        ==================== FIREBASE SETUP INSTRUCTIONS ====================
+        1. Go to https://console.firebase.google.com
+        2. Create new project: "fixmycampus-hack"
+        3. Disable Google Analytics (faster setup)
+        4. Enable Firestore Database in TEST MODE
+        5. Go to Project Settings → Your apps → Web
+        6. Copy firebaseConfig object
+        7. Replace placeholder config below (search for "PLACEHOLDER")
+        8. Save and open index.html in browser
+        9. Click "Add Demo Data" to test
+        ====================================================================
+        */
+
+        // ==================== FIREBASE INITIALIZATION ====================
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            onSnapshot,
+            updateDoc,
+            doc,
+            serverTimestamp,
+            query,
+            orderBy
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAaV22zf87l3KXJAIUvhnT5bpajHAMMAnc",
+            authDomain: "issue-reporter-3a828.firebaseapp.com",
+            projectId: "issue-reporter-3a828",
+            storageBucket: "issue-reporter-3a828.firebasestorage.app",
+            messagingSenderId: "107395663289B",
+            appId: "1:107395663289B:web:364ac19214f9391a67f0db"
+        };
+
+        // Initialize Firebase (skip if placeholder config - avoid crash, show setup banner)
+        let app, db;
+        const isPlaceholderConfig = Object.values(firebaseConfig).some(v => String(v).includes('PLACEHOLDER'));
+        if (isPlaceholderConfig) {
+            db = null;
+            console.warn("Firebase config contains PLACEHOLDER. Replace with your project config.");
+        } else {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                console.log("✅ Firebase initialized successfully");
+            } catch (error) {
+                db = null;
+                console.error("❌ Firebase initialization error:", error);
+            }
+        }
+        if (!db) {
+            showErrorMessage("Firebase setup required. Create project, enable Firestore test mode, copy config, replace PLACEHOLDER values, then refresh.");
+        }
+
+        // ==================== STATE MANAGEMENT ====================
+        const state = {
+            allIssues: [],
+            currentFilter: 'All',
+            currentSort: 'newest',
+            isLoading: false,
+            expandedIds: new Set(),   // Issue IDs with description expanded (Read more)
+            connectionHadError: false
+        };
+
+        // ==================== DOM ELEMENTS ====================
+        const elements = {
+            form: document.getElementById('complaintForm'),
+            title: document.getElementById('title'),
+            description: document.getElementById('description'),
+            category: document.getElementById('category'),
+            priority: document.getElementById('priority'),
+            isAnonymous: document.getElementById('isAnonymous'),
+            submitterName: document.getElementById('submitterName'),
+            nameField: document.getElementById('nameField'),
+            submitBtn: document.getElementById('submitBtn'),
+            charCount: document.getElementById('charCount'),
+            titleError: document.getElementById('titleError'),
+            descError: document.getElementById('descError'),
+            nameError: document.getElementById('nameError'),
+            seedDemoBtn: document.getElementById('seedDemoBtn'),
+            totalCount: document.getElementById('totalCount'),
+            pendingCount: document.getElementById('pendingCount'),
+            progressCount: document.getElementById('progressCount'),
+            resolvedCount: document.getElementById('resolvedCount'),
+            filterButtons: document.getElementById('filterButtons'),
+            sortSelect: document.getElementById('sortSelect'),
+            issuesList: document.getElementById('issuesList'),
+            messageBanner: document.getElementById('messageBanner'),
+            photoUpload: document.getElementById('photoUpload'),
+            photoPreview: document.getElementById('photoPreview'),
+            photoPreviewContainer: document.getElementById('photoPreviewContainer'),
+            photoUploadPrompt: document.getElementById('photoUploadPrompt'),
+            removePhoto: document.getElementById('removePhoto')
+        };
+
+        // Store uploaded photo data
+        let uploadedPhotoData = null;
+
+        // ==================== FIREBASE FUNCTIONS ====================
+
+        /**
+         * Set up real-time listener for issues collection
+         */
+        function setupRealtimeListener() {
+            if (!db) {
+                console.warn("Database not initialized. Skipping listener setup.");
+                return;
+            }
+
+            try {
+                const issuesQuery = query(collection(db, 'issues'), orderBy('createdAt', 'desc'));
+
+                onSnapshot(issuesQuery, (snapshot) => {
+                    state.allIssues = [];
+                    snapshot.forEach((docSnap) => {
+                        state.allIssues.push({
+                            id: docSnap.id,
+                            ...docSnap.data()
+                        });
+                    });
+                    if (state.connectionHadError) {
+                        showSuccessMessage('Connection restored.');
+                        state.connectionHadError = false;
+                    }
+                    console.log(`📊 Loaded ${state.allIssues.length} issues from Firestore`);
+                    renderAll();
+                }, (error) => {
+                    console.error("❌ Firestore listener error:", error);
+                    state.connectionHadError = true;
+                    if (error.code === 'permission-denied') {
+                        showErrorMessage('Access denied. Check Firestore rules.');
+                    } else if (error.code === 'resource-exhausted') {
+                        showErrorMessage('Database quota exceeded. Try again later.');
+                    } else if (error.code === 'unavailable') {
+                        showErrorMessage('Connection lost. Changes may not save.');
+                    } else {
+                        showErrorMessage('Database connection error. Please check your connection.');
+                    }
+                });
+            } catch (error) {
+                console.error("❌ Error setting up listener:", error);
+            }
+        }
+
+        /**
+         * Add new issue to Firestore
+         */
+        async function addIssueToFirestore(issueData) {
+            if (!db) {
+                showErrorMessage("Database not initialized. Please check Firebase configuration.");
+                return false;
+            }
+
+            try {
+                const docRef = await addDoc(collection(db, 'issues'), {
+                    ...issueData,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                console.log("✅ Issue added with ID:", docRef.id);
+                return true;
+            } catch (error) {
+                console.error("❌ Error adding issue:", error);
+
+                if (error.code === 'permission-denied') {
+                    showErrorMessage('Access denied. Check Firestore rules.');
+                } else if (error.code === 'unavailable') {
+                    showErrorMessage('Network error. Please check your connection.');
+                } else if (error.code === 'resource-exhausted') {
+                    showErrorMessage('Database quota exceeded. Try again later.');
+                } else {
+                    showErrorMessage('Database error. Please try again.');
+                }
+                return false;
+            }
+        }
+
+        // ==================== EVENT HANDLERS ====================
+
+        /**
+         * Handle form submission
+         */
+        elements.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+
+            // Disable submit button
+            elements.submitBtn.disabled = true;
+            elements.submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Submitting...';
+
+            // Prepare issue data
+            const issueData = {
+                title: elements.title.value.trim(),
+                description: elements.description.value.trim(),
+                category: elements.category.value,
+                priority: elements.priority.value,
+                isAnonymous: elements.isAnonymous.checked,
+                submitterName: elements.isAnonymous.checked ? '' : elements.submitterName.value.trim(),
+                status: 'Pending',
+                photoURL: uploadedPhotoData || null  // Add photo data if available
+            };
+
+            // Add to Firestore
+            const success = await addIssueToFirestore(issueData);
+
+            if (success) {
+                // Reset form
+                elements.form.reset();
+                elements.isAnonymous.checked = true;
+                elements.nameField.classList.add('hidden');
+                elements.charCount.textContent = '0 / 500 characters';
+                elements.charCount.classList.remove('char-count-warning');
+                elements.titleError.classList.add('hidden');
+                elements.descError.classList.add('hidden');
+                if (elements.nameError) elements.nameError.classList.add('hidden');
+                elements.title.setAttribute('aria-invalid', false);
+                elements.description.setAttribute('aria-invalid', false);
+                elements.submitterName.setAttribute('aria-invalid', false);
+
+                // Reset photo
+                resetPhotoUpload();
+
+                // Show success message
+                showSuccessMessage('✅ Issue submitted successfully!');
+
+                // Scroll to top of issues list
+                setTimeout(() => {
+                    elements.issuesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 500);
+            }
+
+            // Re-enable submit button
+            elements.submitBtn.disabled = false;
+            elements.submitBtn.textContent = 'Submit Issue';
+        });
+
+        /**
+         * Toggle anonymous fields
+         */
+        elements.isAnonymous.addEventListener('change', () => {
+            if (elements.isAnonymous.checked) {
+                elements.nameField.classList.add('hidden');
+                elements.submitterName.required = false;
+                elements.submitterName.setAttribute('aria-required', 'false');
+                if (elements.nameError) elements.nameError.classList.add('hidden');
+            } else {
+                elements.nameField.classList.remove('hidden');
+                elements.submitterName.required = true;
+                elements.submitterName.setAttribute('aria-required', 'true');
+            }
+        });
+
+        /**
+         * Character counter for description
+         */
+        elements.description.addEventListener('input', () => {
+            updateCharCount();
+        });
+
+        /**
+         * Real-time validation
+         */
+        elements.title.addEventListener('blur', () => {
+            const value = elements.title.value.trim();
+            const invalid = value.length > 0 && (value.length < 5 || value.length > 100);
+            elements.titleError.classList.toggle('hidden', !invalid);
+            elements.title.setAttribute('aria-invalid', invalid);
+        });
+
+        elements.description.addEventListener('blur', () => {
+            const value = elements.description.value.trim();
+            const invalid = value.length > 0 && (value.length < 10 || value.length > 500);
+            elements.descError.classList.toggle('hidden', !invalid);
+            elements.description.setAttribute('aria-invalid', invalid);
+        });
+
+        elements.submitterName.addEventListener('blur', () => {
+            if (elements.isAnonymous.checked) return;
+            const value = elements.submitterName.value.trim();
+            const invalid = value.length > 0 && (value.length < 2 || value.length > 50);
+            elements.nameError.classList.toggle('hidden', !invalid);
+            elements.submitterName.setAttribute('aria-invalid', invalid);
+        });
+
+        /**
+         * AI Analysis button handler
+         */
+        const aiAnalyzeBtn = document.getElementById('aiAnalyzeBtn');
+        if (aiAnalyzeBtn) {
+            aiAnalyzeBtn.addEventListener('click', analyzePriorityWithAI);
+        }
+
+        /**
+         * Photo Upload Handlers
+         */
+        // Handle file selection
+        elements.photoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handlePhotoUpload(file);
+            }
+        });
+
+        // Handle remove photo button
+        elements.removePhoto.addEventListener('click', () => {
+            resetPhotoUpload();
+        });
+
+        // Handle drag and drop
+        const dropZone = elements.photoUpload.parentElement;
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handlePhotoUpload(file);
+            } else {
+                showErrorMessage('❌ Please upload an image file');
+            }
+        });
+
+        /**
+         * Sort change handler
+         */
+        elements.sortSelect.addEventListener('change', (e) => {
+            state.currentSort = e.target.value;
+            renderAll();
+        });
+
+        /**
+         * Event delegation: Read more link and status buttons
+         */
+        elements.issuesList.addEventListener('click', (e) => {
+            const link = e.target.closest('.read-more-link');
+            if (link) {
+                e.preventDefault();
+                const id = link.getAttribute('data-issue-id');
+                if (id) {
+                    state.expandedIds.add(id);
+                    renderAll();
+                }
+                return;
+            }
+        });
+
+        /**
+         * Seed demo data
+         */
+        elements.seedDemoBtn.addEventListener('click', async () => {
+            if (!confirm('Add 5 demo issues to the database?')) {
+                return;
+            }
+
+            elements.seedDemoBtn.disabled = true;
+            elements.seedDemoBtn.innerHTML = '<span class="inline-block animate-spin">⏳</span> Adding...';
+
+            await seedDemoData();
+
+            elements.seedDemoBtn.disabled = false;
+            elements.seedDemoBtn.textContent = '🎲 Add Demo Data';
+        });
+
+        // ==================== RENDER FUNCTIONS ====================
+
+        /**
+         * Master render function
+         */
+        function renderAll() {
+            renderDashboardStats();
+            renderFilterButtons();
+            renderIssues();
+        }
+
+        /**
+         * Render dashboard statistics
+         */
+        function renderDashboardStats() {
+            const stats = calculateStats(state.allIssues);
+
+            animateCount(elements.totalCount, stats.total);
+            animateCount(elements.pendingCount, stats.pending);
+            animateCount(elements.progressCount, stats.inProgress);
+            animateCount(elements.resolvedCount, stats.resolved);
+        }
+
+        /**
+         * Render filter buttons
+         */
+        function renderFilterButtons() {
+            const stats = calculateStats(state.allIssues);
+
+            const filters = [
+                { label: 'All', value: 'All', count: stats.total },
+                { label: 'High Priority', value: 'High', count: stats.highPriority },
+                { label: 'Medium Priority', value: 'Medium', count: stats.mediumPriority },
+                { label: 'Low Priority', value: 'Low', count: stats.lowPriority },
+                { label: 'Pending', value: 'Pending', count: stats.pending },
+                { label: 'In Progress', value: 'In Progress', count: stats.inProgress },
+                { label: 'Resolved', value: 'Resolved', count: stats.resolved }
+            ];
+
+            elements.filterButtons.innerHTML = filters.map(filter => {
+                const isActive = state.currentFilter === filter.value;
+                return `
+        <button 
+          type="button"
+          class="px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[44px] ${isActive
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }"
+          onclick="window.handleFilterChange('${filter.value}')"
+          aria-pressed="${isActive}"
+        >
+          ${filter.label} (${filter.count})
+        </button>
+      `;
+            }).join('');
+        }
+
+        /**
+         * Render issues list
+         */
+        function renderIssues() {
+            const filtered = filterIssues(state.allIssues, state.currentFilter);
+            const sorted = sortIssues(filtered, state.currentSort);
+
+            if (sorted.length === 0) {
+                elements.issuesList.innerHTML = `
+        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+          <div class="text-6xl mb-4">🔍</div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-2">No issues found</h3>
+          <p class="text-gray-600">Try adjusting your filters or add new issues</p>
+        </div>
+      `;
+                return;
+            }
+
+            elements.issuesList.innerHTML = sorted.map(issue => renderIssueCard(issue)).join('');
+        }
+
+        /**
+         * Render single issue card
+         */
+        function renderIssueCard(issue) {
+            const priorityColors = {
+                High: 'bg-red-100 text-red-800 border-l-red-500',
+                Medium: 'bg-yellow-100 text-yellow-800 border-l-yellow-500',
+                Low: 'bg-green-100 text-green-800 border-l-green-500'
+            };
+
+            const statusColors = {
+                Pending: 'bg-gray-100 text-gray-800',
+                'In Progress': 'bg-blue-100 text-blue-800',
+                Resolved: 'bg-green-100 text-green-800'
+            };
+
+            const statusIcons = {
+                Pending: '⏳',
+                'In Progress': '🔄',
+                Resolved: '✅'
+            };
+
+            const categoryEmojis = {
+                Infrastructure: '🏗️',
+                Academics: '📚',
+                Hostel: '🏠',
+                Facilities: '🔧',
+                Safety: '🚨',
+                HR: '👥',
+                Other: '📋'
+            };
+
+            const borderColor = issue.priority === 'High' ? 'border-l-red-500' :
+                issue.priority === 'Medium' ? 'border-l-yellow-500' :
+                    'border-l-green-500';
+
+            const nextStatus = getNextStatus(issue.status);
+            const buttonText = issue.status === 'Resolved'
+                ? '✅ Completed'
+                : `Mark as ${nextStatus}`;
+
+            const buttonClass = issue.status === 'Resolved'
+                ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg';
+
+            const timestamp = issue.createdAt ? formatTimestamp(issue.createdAt) : 'Just now';
+            const desc = issue.description || '';
+            const isLong = desc.length > 150;
+            const isExpanded = state.expandedIds.has(issue.id);
+            const showDesc = isLong && !isExpanded ? escapeHtml(desc.slice(0, 150)) + '...' : escapeHtml(desc);
+            const readMoreLink = isLong && !isExpanded
+                ? ` <a href="#" class="read-more-link text-blue-600 hover:underline font-semibold" data-issue-id="${issue.id}">... Read more</a>`
+                : '';
+
+            return `
+      <article class="bg-white rounded-xl shadow-lg border-l-4 ${borderColor} p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 fade-in">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-xl font-bold text-gray-800 flex-1">${escapeHtml(issue.title)}</h3>
+          <div class="flex gap-2 ml-4">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold ${priorityColors[issue.priority]}">${issue.priority}</span>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[issue.status]}">${statusIcons[issue.status]} ${issue.status}</span>
+          </div>
+        </div>
+        
+        <div class="text-gray-700 mb-4 leading-relaxed issue-description">${showDesc}${readMoreLink}</div>
+        
+        ${issue.photoURL ? `
+        <div class="mb-4">
+          <img src="${issue.photoURL}" alt="Issue photo" 
+            class="w-full h-64 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+            onclick="window.open('${issue.photoURL}', '_blank')">
+          <p class="text-xs text-gray-500 mt-1 text-center">📷 Click to view full size</p>
+        </div>
+        ` : ''}
+        
+        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+          <span class="flex items-center gap-1">
+            ${issue.isAnonymous ? '🕵️ Anonymous' : `👤 ${escapeHtml(issue.submitterName)}`}
+          </span>
+          <span class="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">
+            ${categoryEmojis[issue.category]} ${issue.category}
+          </span>
+          <span class="text-xs text-gray-500">${timestamp}</span>
+        </div>
+      </article>
+    `;
+        }
+
+        // ==================== DATA PROCESSING FUNCTIONS ====================
+
+        /**
+         * Filter issues based on filter type
+         */
+        function filterIssues(issues, filter) {
+            if (filter === 'All') return issues;
+
+            if (['High', 'Medium', 'Low'].includes(filter)) {
+                return issues.filter(issue => issue.priority === filter);
+            }
+
+            return issues.filter(issue => issue.status === filter);
+        }
+
+        /**
+         * Sort issues based on sort type
+         */
+        function sortIssues(issues, sortType) {
+            const sorted = [...issues];
+
+            switch (sortType) {
+                case 'newest':
+                    return sorted.sort((a, b) => {
+                        const aTime = a.createdAt?.toMillis?.() || 0;
+                        const bTime = b.createdAt?.toMillis?.() || 0;
+                        return bTime - aTime;
+                    });
+
+                case 'oldest':
+                    return sorted.sort((a, b) => {
+                        const aTime = a.createdAt?.toMillis?.() || 0;
+                        const bTime = b.createdAt?.toMillis?.() || 0;
+                        return aTime - bTime;
+                    });
+
+                case 'highPriority':
+                    const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+                    return sorted.sort((a, b) => {
+                        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                        if (priorityDiff !== 0) return priorityDiff;
+                        const aTime = a.createdAt?.toMillis?.() || 0;
+                        const bTime = b.createdAt?.toMillis?.() || 0;
+                        return bTime - aTime;
+                    });
+
+                case 'lowPriority':
+                    const reversePriorityOrder = { Low: 0, Medium: 1, High: 2 };
+                    return sorted.sort((a, b) => {
+                        const priorityDiff = reversePriorityOrder[a.priority] - reversePriorityOrder[b.priority];
+                        if (priorityDiff !== 0) return priorityDiff;
+                        const aTime = a.createdAt?.toMillis?.() || 0;
+                        const bTime = b.createdAt?.toMillis?.() || 0;
+                        return bTime - aTime;
+                    });
+
+                default:
+                    return sorted;
+            }
+        }
+
+        // ==================== PHOTO UPLOAD FUNCTIONS ====================
+
+        /**
+         * Handle photo upload and preview
+         */
+        function handlePhotoUpload(file) {
+            // Validate file size (5MB max)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                showErrorMessage('❌ Photo size must be less than 5MB');
+                return;
+            }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showErrorMessage('❌ Please upload an image file');
+                return;
+            }
+
+            // Read file and convert to base64
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Image = e.target.result;
+                uploadedPhotoData = base64Image;
+
+                // Show preview
+                elements.photoPreview.src = base64Image;
+                elements.photoPreviewContainer.classList.remove('hidden');
+                elements.photoUploadPrompt.classList.add('hidden');
+
+                showSuccessMessage('✅ Photo uploaded successfully!');
+            };
+
+            reader.onerror = () => {
+                showErrorMessage('❌ Failed to read photo. Please try again.');
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Reset photo upload
+         */
+        function resetPhotoUpload() {
+            uploadedPhotoData = null;
+            elements.photoUpload.value = '';
+            elements.photoPreview.src = '';
+            elements.photoPreviewContainer.classList.add('hidden');
+            elements.photoUploadPrompt.classList.remove('hidden');
+        }
+
+        /**
+         * Calculate statistics
+         */
+        function calculateStats(issues) {
+            return {
+                total: issues.length,
+                pending: issues.filter(i => i.status === 'Pending').length,
+                inProgress: issues.filter(i => i.status === 'In Progress').length,
+                resolved: issues.filter(i => i.status === 'Resolved').length,
+                highPriority: issues.filter(i => i.priority === 'High').length,
+                mediumPriority: issues.filter(i => i.priority === 'Medium').length,
+                lowPriority: issues.filter(i => i.priority === 'Low').length
+            };
+        }
+
+        /**
+         * Get next status in workflow
+         */
+        function getNextStatus(currentStatus) {
+            const statusFlow = {
+                'Pending': 'In Progress',
+                'In Progress': 'Resolved',
+                'Resolved': 'Resolved'
+            };
+            return statusFlow[currentStatus] || 'Pending';
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+
+        /**
+         * Format Firestore timestamp to relative time
+         */
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Just now';
+
+            let date;
+            if (typeof timestamp.toDate === 'function') {
+                date = timestamp.toDate();
+            } else if (timestamp.seconds) {
+                date = new Date(timestamp.seconds * 1000);
+            } else if (timestamp instanceof Date) {
+                date = timestamp;
+            } else {
+                return 'Just now';
+            }
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+            return date.toLocaleDateString();
+        }
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * Validate form fields (rejects whitespace-only via trim(); min/max lengths enforced)
+         */
+        function validateForm() {
+            let isValid = true;
+
+            const title = elements.title.value.trim();
+            const titleInvalid = title.length < 5 || title.length > 100;
+            elements.titleError.classList.toggle('hidden', !titleInvalid);
+            elements.title.setAttribute('aria-invalid', titleInvalid);
+            if (titleInvalid) isValid = false;
+
+            const desc = elements.description.value.trim();
+            const descInvalid = desc.length < 10 || desc.length > 500;
+            elements.descError.classList.toggle('hidden', !descInvalid);
+            elements.description.setAttribute('aria-invalid', descInvalid);
+            if (descInvalid) isValid = false;
+
+            if (!elements.isAnonymous.checked) {
+                const name = elements.submitterName.value.trim();
+                const nameInvalid = name.length < 2 || name.length > 50;
+                if (elements.nameError) elements.nameError.classList.toggle('hidden', !nameInvalid);
+                elements.submitterName.setAttribute('aria-invalid', nameInvalid);
+                if (nameInvalid) isValid = false;
+            } else {
+                if (elements.nameError) elements.nameError.classList.add('hidden');
+                elements.submitterName.setAttribute('aria-invalid', false);
+            }
+
+            return isValid;
+        }
+
+        /**
+         * Update character count
+         */
+        function updateCharCount() {
+            const length = elements.description.value.length;
+            elements.charCount.textContent = `${length} / 500 characters`;
+
+            if (length > 450) {
+                elements.charCount.classList.add('char-count-warning');
+            } else {
+                elements.charCount.classList.remove('char-count-warning');
+            }
+        }
+
+        /**
+         * Show success message
+         */
+        function showSuccessMessage(message) {
+            const banner = document.getElementById('messageBanner');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+            banner.className = 'bg-green-500 text-white px-4 py-3 shadow-lg slide-down text-center font-semibold';
+            banner.textContent = message;
+            setTimeout(() => banner.classList.add('hidden'), 3000);
+        }
+
+        /**
+         * Show error message
+         */
+        function showErrorMessage(message) {
+            const banner = document.getElementById('messageBanner');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+            banner.className = 'bg-red-500 text-white px-4 py-3 shadow-lg slide-down text-center font-semibold';
+            banner.textContent = message;
+            setTimeout(() => banner.classList.add('hidden'), 5000);
+        }
+
+        /**
+         * Animate number count
+         */
+        function animateCount(element, targetValue) {
+            const currentValue = parseInt(element.textContent) || 0;
+            if (currentValue === targetValue) return;
+
+            const duration = 200;
+            const steps = 20;
+            const stepValue = (targetValue - currentValue) / steps;
+            const stepDuration = duration / steps;
+
+            let current = currentValue;
+            const timer = setInterval(() => {
+                current += stepValue;
+                if ((stepValue > 0 && current >= targetValue) || (stepValue < 0 && current <= targetValue)) {
+                    element.textContent = targetValue;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(current);
+                }
+            }, stepDuration);
+        }
+
+        /**
+         * AI-Powered Priority Analysis using Intelligent Rules
+         * Works without API - Pure JavaScript Intelligence
+         */
+        async function analyzePriorityWithAI() {
+            const title = elements.title.value.trim();
+            const description = elements.description.value.trim();
+            const category = elements.category.value;
+
+            // Validation
+            if (!title || title.length < 5) {
+                showErrorMessage('❌ Please enter a valid issue title first');
+                return;
+            }
+
+            if (!description || description.length < 10) {
+                showErrorMessage('❌ Please enter a detailed description first');
+                return;
+            }
+
+            // Show loading state
+            const aiBtn = document.getElementById('aiAnalyzeBtn');
+            const originalBtnText = aiBtn.innerHTML;
+            aiBtn.innerHTML = '<span>🤖 Analyzing...</span>';
+            aiBtn.disabled = true;
+
+            // Simulate AI processing time for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            try {
+                // Intelligent rule-based analysis
+                const analysis = analyzeIssuePriority(title, description, category);
+                
+                // Update priority dropdown
+                elements.priority.value = analysis.priority;
+
+                // Show analysis result
+                const resultDiv = document.getElementById('aiAnalysisResult');
+                const analysisText = document.getElementById('aiAnalysisText');
+                const reasoningText = document.getElementById('aiReasoningText');
+
+                analysisText.textContent = `Suggested Priority: ${getPriorityEmoji(analysis.priority)} ${analysis.priority}`;
+                reasoningText.textContent = `Reasoning: ${analysis.reasoning}`;
+
+                // Style based on priority
+                resultDiv.className = 'mt-3 p-4 rounded-lg border-2';
+                if (analysis.priority === 'High') {
+                    resultDiv.classList.add('bg-red-50', 'border-red-300');
+                } else if (analysis.priority === 'Medium') {
+                    resultDiv.classList.add('bg-yellow-50', 'border-yellow-300');
+                } else {
+                    resultDiv.classList.add('bg-green-50', 'border-green-300');
+                }
+
+                resultDiv.classList.remove('hidden');
+                
+                showSuccessMessage('✅ AI analysis complete!');
+
+            } catch (error) {
+                console.error('AI Analysis Error:', error);
+                showErrorMessage('❌ AI analysis failed. Please select priority manually.');
+            } finally {
+                aiBtn.innerHTML = originalBtnText;
+                aiBtn.disabled = false;
+            }
+        }
+
+        /**
+         * Intelligent Priority Analysis Engine
+         * Uses pattern matching and keyword analysis
+         */
+        function analyzeIssuePriority(title, description, category) {
+            const text = (title + ' ' + description).toLowerCase();
+            let score = 0;
+            let reasons = [];
+
+            // HIGH PRIORITY KEYWORDS (Safety & Urgent)
+            const highPriorityKeywords = [
+                'urgent', 'emergency', 'broken', 'not working', 'down', 'failed',
+                'dangerous', 'unsafe', 'injury', 'hurt', 'bleeding', 'fire', 
+                'gas leak', 'electrical', 'water leak', 'flood', 'locked',
+                'stolen', 'theft', 'violence', 'harassment', 'threat',
+                'immediately', 'asap', 'critical', 'severe', 'serious',
+                'all students', 'entire campus', 'campus-wide', 'everyone affected',
+                'no access', 'cannot enter', 'blocked', 'closed'
+            ];
+
+            // MEDIUM PRIORITY KEYWORDS (Important but not critical)
+            const mediumPriorityKeywords = [
+                'important', 'needed', 'issue', 'problem', 'concern',
+                'multiple', 'several', 'many students', 'classroom',
+                'uncomfortable', 'inconvenient', 'difficult', 'unclear',
+                'confusing', 'not functioning', 'malfunctioning', 'slow',
+                'delayed', 'waiting', 'request', 'improvement'
+            ];
+
+            // LOW PRIORITY KEYWORDS (Can wait)
+            const lowPriorityKeywords = [
+                'suggestion', 'idea', 'recommend', 'could', 'would like',
+                'minor', 'small', 'cosmetic', 'aesthetic', 'paint',
+                'decoration', 'enhancement', 'future', 'eventually',
+                'when possible', 'consider', 'maybe', 'optional'
+            ];
+
+            // Check HIGH priority indicators
+            highPriorityKeywords.forEach(keyword => {
+                if (text.includes(keyword)) {
+                    score += 3;
+                    reasons.push(`Contains urgent keyword: "${keyword}"`);
+                }
+            });
+
+            // Check MEDIUM priority indicators
+            mediumPriorityKeywords.forEach(keyword => {
+                if (text.includes(keyword)) {
+                    score += 1;
+                }
+            });
+
+            // Check LOW priority indicators (negative score)
+            lowPriorityKeywords.forEach(keyword => {
+                if (text.includes(keyword)) {
+                    score -= 2;
+                }
+            });
+
+            // CATEGORY-BASED SCORING
+            if (category === 'Safety') {
+                score += 5;
+                reasons.push('Safety category has highest priority');
+            } else if (category === 'Infrastructure') {
+                score += 3;
+                reasons.push('Infrastructure issues need quick attention');
+            } else if (category === 'Academics') {
+                score += 2;
+                reasons.push('Academic issues affect learning');
+            } else if (category === 'Hostel') {
+                score += 2;
+            } else if (category === 'Facilities') {
+                score += 1;
+            }
+
+            // IMPACT ANALYSIS - Multiple people affected
+            if (text.match(/\b(all|every|entire|whole|campus|everyone|multiple|many)\b/)) {
+                score += 2;
+                reasons.push('Affects multiple people');
+            }
+
+            // URGENCY ANALYSIS - Time sensitive words
+            if (text.match(/\b(today|now|immediately|urgent|asap|emergency)\b/)) {
+                score += 3;
+                reasons.push('Time-sensitive situation');
+            }
+
+            // NEGATION ANALYSIS - "not working", "cannot", etc.
+            if (text.match(/\b(not|no|can't|cannot|won't|doesn't|isn't|aren't)\b/)) {
+                score += 2;
+                reasons.push('Something is non-functional');
+            }
+
+            // DESCRIPTION LENGTH ANALYSIS - Longer descriptions = more serious
+            if (description.length > 200) {
+                score += 1;
+                reasons.push('Detailed description indicates serious concern');
+            }
+
+            // DETERMINE PRIORITY BASED ON SCORE
+            let priority;
+            let reasoning;
+
+            if (score >= 8) {
+                priority = 'High';
+                reasoning = reasons.length > 0 
+                    ? reasons.slice(0, 2).join('; ') + '. This requires immediate attention.'
+                    : 'This issue requires immediate attention based on severity indicators.';
+            } else if (score >= 4) {
+                priority = 'Medium';
+                reasoning = reasons.length > 0
+                    ? reasons.slice(0, 2).join('; ') + '. Should be addressed soon.'
+                    : 'This issue should be addressed within a few days.';
+            } else {
+                priority = 'Low';
+                reasoning = 'This issue can be scheduled for routine maintenance or consideration.';
+            }
+
+            // Add category context to reasoning
+            if (category === 'Safety' && priority !== 'High') {
+                priority = 'High';
+                reasoning = 'All safety-related issues are treated as high priority for campus security.';
+            }
+
+            return { priority, reasoning, score };
+        }
+
+        function getPriorityEmoji(priority) {
+            switch(priority) {
+                case 'High': return '🔴';
+                case 'Medium': return '🟡';
+                case 'Low': return '🟢';
+                default: return '⚪';
+            }
+        }
+
+        /**
+         * Seed demo data
+         */
+        async function seedDemoData() {
+            const demoIssues = [
+                {
+                    title: "Broken WiFi",
+                    description: "The WiFi connection keeps dropping every 10-15 minutes. This is severely affecting students who are trying to complete their assignments and research work. The issue has been persistent for the past week.",
+                    category: "Infrastructure",
+                    priority: "High",
+                    isAnonymous: false,
+                    submitterName: "Rahul Kumar",
+                    status: "Pending"
+                },
+                {
+                    title: "Unclear Assignment",
+                    description: "The assignment instructions are very confusing. Section 3 contradicts Section 5, and the deadline mentioned in the syllabus doesn't match the one on the portal.",
+                    category: "Academics",
+                    priority: "Medium",
+                    isAnonymous: true,
+                    submitterName: "",
+                    status: "Pending"
+                },
+                {
+                    title: "Poor Lighting Parking C",
+                    description: "Parking C has very dim lighting, making it unsafe to walk through during evening hours. Many students have expressed concerns about security. Additional lights or brighter bulbs needed urgently.",
+                    category: "Safety",
+                    priority: "High",
+                    isAnonymous: false,
+                    submitterName: "Priya Sharma",
+                    status: "In Progress"
+                },
+                {
+                    title: "Hostel Mess",
+                    description: "The quality of food in the hostel mess has noticeably declined over the past month. Several students have complained about undercooked meals and lack of variety. Request for quality check.",
+                    category: "Hostel",
+                    priority: "Medium",
+                    isAnonymous: true,
+                    submitterName: "",
+                    status: "Pending"
+                },
+                {
+                    title: "AC Lab 203",
+                    description: "The air conditioning system in Computer Lab 203 has been non-functional for the past two days. With 40+ students in the lab, it becomes very uncomfortable during afternoon sessions.",
+                    category: "Facilities",
+                    priority: "Low",
+                    isAnonymous: false,
+                    submitterName: "Amit Patel",
+                    status: "Resolved"
+                }
+            ];
+
+            let allSucceeded = true;
+            for (const issue of demoIssues) {
+                const success = await addIssueToFirestore(issue);
+                if (!success) {
+                    allSucceeded = false;
+                    break;
+                }
+            }
+
+            if (allSucceeded) {
+                showSuccessMessage('✅ Demo data added successfully!');
+                setTimeout(() => {
+                    elements.issuesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 1000);
+            }
+        }
+
+        // ==================== EVENT HANDLERS (filter) ====================
+        // handleFilterChange exposed to window for filter button onclick
+
+        window.handleFilterChange = function (filter) {
+            state.currentFilter = filter;
+            renderAll();
+        };
+
+        // ==================== INITIALIZATION ====================
+
+        // Set up Firebase listener (only if init succeeded)
+        if (db) {
+            setupRealtimeListener();
+        }
+
+        // Initial render
+        renderAll();
+
+        console.log("🚀 FixMyCampus initialized successfully!");
+
+        // ==================== LOGIN PROTECTION ====================
+        // Check if user is logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            const userType = sessionStorage.getItem('userType');
+            
+            if (userType !== 'student') {
+                // Redirect to login if not logged in as student
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+
+    </script>
+
+</body>
+
+</html>
